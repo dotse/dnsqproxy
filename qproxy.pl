@@ -29,8 +29,6 @@ use utf8;
 use warnings;
 use strict;
 
-# use local::lib
-
 use Net::DNS;
 use Net::DNS::SEC;
 use IO::Socket::INET6;
@@ -43,7 +41,7 @@ use Data::Dumper;
 my $version = sprintf( "qproxy 0.3 Net::DNS %s", Net::DNS->version );
 
 sub main {
-    while ( <STDIN> ) {
+    while ( <> ) {
         chomp;
         exit( 0 ) if ( $_ eq "" );
 
