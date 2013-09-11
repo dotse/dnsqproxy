@@ -36,7 +36,6 @@ use Time::HiRes qw(gettimeofday tv_interval);
 use MIME::Base64;
 use JSON;
 use Net::IP qw(:PROC);
-use Data::Dumper;
 
 my $version = sprintf( "qproxy 0.3 Net::DNS %s", Net::DNS->version );
 
