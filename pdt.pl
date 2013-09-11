@@ -32,7 +32,7 @@ my $known_bad_qtype  = "SOA";
 my $recursive_qname  = "example.com";
 my $recursive_qtype  = "SOA";
 
-my @transports = ("udp", "tcp");
+my @transports = ( "udp", "tcp" );
 
 my %template = (
 
@@ -49,13 +49,13 @@ my %template = (
 );
 
 sub xmit($) {
-    my $json = to_json(shift);
+    my $json = to_json( shift );
     print STDERR "QUERY: ", $json, "\n";
     print $json, "\n";
 }
 
-foreach my $server (@servers) {
-    foreach my $transport (@transports) {
+foreach my $server ( @servers ) {
+    foreach my $transport ( @transports ) {
 
         my %query = %template;
 
@@ -67,48 +67,48 @@ foreach my $server (@servers) {
         $query{qname} = $zone;
         $query{qtype} = "SOA";
         $query{flags} = { do => 0, cd => 0, rd => 0, ad => 0 };
-        xmit(\%query);
+        xmit( \%query );
 
         # SOA with DO=1 (DNS02, DNS03, DNS07)
         $query{tag}   = "t2";
         $query{qname} = $zone;
         $query{qtype} = "SOA";
         $query{flags} = { do => 1, cd => 0, rd => 0, ad => 0 };
-        xmit(\%query);
+        xmit( \%query );
 
         # NS (DNS05, DNS06, DNS08)
         $query{tag}   = "t3";
         $query{qname} = $zone;
         $query{qtype} = "NS";
         $query{flags} = { do => 1, cd => 0, rd => 0, ad => 0 };
-        xmit(\%query);
+        xmit( \%query );
 
         # DNSKEY (DNS16)
         $query{tag}   = "t4";
         $query{qname} = $zone;
         $query{qtype} = "DNSKEY";
         $query{flags} = { do => 1, cd => 0, rd => 0, ad => 0 };
-        xmit(\%query);
+        xmit( \%query );
 
         # DELEGATION resulting in referal (ADD11)
         $query{tag}   = "t5";
         $query{qname} = $known_good_qname;
         $query{qtype} = $known_good_qtype;
         $query{flags} = { do => 1, cd => 0, rd => 0, ad => 0 };
-        xmit(\%query);
+        xmit( \%query );
 
         # DELEGATION resulting in NXDOMAIN (DNS17)
         $query{tag}   = "t6";
         $query{qname} = $known_bad_qname;
         $query{qtype} = $known_bad_qtype;
         $query{flags} = { do => 1, cd => 0, rd => 0, ad => 0 };
-        xmit(\%query);
+        xmit( \%query );
 
         # RECURSION (DNS11)
         $query{tag}   = "t7";
         $query{qname} = $recursive_qname;
         $query{qtype} = $recursive_qtype;
         $query{flags} = { do => 0, cd => 0, rd => 1, ad => 0 };
-        xmit(\%query);
+        xmit( \%query );
     }
 }

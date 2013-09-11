@@ -37,6 +37,6 @@ my @queries = (
     },
 );
 
-foreach my $json (map { to_json($_) } @queries) {
+foreach my $json ( map { to_json( $_ ) } @queries ) {
     print $json, "\n";
 }

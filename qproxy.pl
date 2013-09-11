@@ -40,56 +40,55 @@ use JSON;
 use Net::IP qw(:PROC);
 use Data::Dumper;
 
-my $version = sprintf("qproxy 0.3 Net::DNS %s", Net::DNS->version);
+my $version = sprintf( "qproxy 0.3 Net::DNS %s", Net::DNS->version );
 
 sub main {
-    while (<STDIN>) {
+    while ( <STDIN> ) {
         chomp;
-        exit(0) if ($_ eq "");
+        exit( 0 ) if ( $_ eq "" );
 
         my $json_query = undef;
-        eval { $json_query = from_json($_); };
-        if ($@) {
-            fatal("Failed to parse JSON input");
+        eval { $json_query = from_json( $_ ); };
+        if ( $@ ) {
+            fatal( "Failed to parse JSON input" );
         }
 
-        my $resolver = setup_resolver($json_query);
+        my $resolver = setup_resolver( $json_query );
 
         ## no critic (Modules::RequireExplicitInclusion)
-        my $dns_query =
-          Net::DNS::Packet->new($json_query->{qname}, $json_query->{qtype},
-            $json_query->{qclass});
+        my $dns_query = Net::DNS::Packet->new( $json_query->{qname}, $json_query->{qtype}, $json_query->{qclass} );
 
         my $t1           = [gettimeofday];
-        my $dns_response = $resolver->send($dns_query);
+        my $dns_response = $resolver->send( $dns_query );
         my $t2           = [gettimeofday];
 
         my $json_response = {
             'address'   => $json_query->{address},
             'port'      => $json_query->{port},
             'transport' => $json_query->{transport},
-            'time '     => tv_interval($t1, $t2),
-            'query'   => $dns_query ? encode_base64($dns_query->data, "") : "",
-            'version' => $version,
+            'time '     => tv_interval( $t1, $t2 ),
+            'query'     => $dns_query ? encode_base64( $dns_query->data, "" ) : "",
+            'version'   => $version,
         };
 
         # set tag in response if given in query
-        if ($json_query->{tag}) {
+        if ( $json_query->{tag} ) {
             $json_response->{tag} = $json_query->{tag};
         }
 
-        if ($dns_response) {
-            if ($dns_response) {
-                $json_response->{'response'} =
-                  encode_base64($dns_response->data, "");
-            } else {
+        if ( $dns_response ) {
+            if ( $dns_response ) {
+                $json_response->{'response'} = encode_base64( $dns_response->data, "" );
+            }
+            else {
                 $json_response->{'response'} = "";
             }
-        } else {
+        }
+        else {
             $json_response->{'error'} = $resolver->errorstring;
         }
 
-        print to_json($json_response, { utf8 => 1 }), "\n";
+        print to_json( $json_response, { utf8 => 1 } ), "\n";
     }
 
     return;
@@ -103,9 +102,9 @@ sub fatal {
         'version' => $version,
     };
 
-    print to_json($json_response, { utf8 => 1 }), "\n";
+    print to_json( $json_response, { utf8 => 1 } ), "\n";
 
-    exit(0);
+    exit( 0 );
 }
 
 sub setup_resolver {
@@ -126,73 +125,73 @@ sub setup_resolver {
     $param->{flags}->{do} //= 0;
 
     # Check for required parameters
-    fatal("Missing address") unless defined($param->{address});
-    fatal("Missing QNAME")   unless defined($param->{qname});
-    fatal("Missing QTYPE")   unless defined($param->{qtype});
+    fatal( "Missing address" ) unless defined( $param->{address} );
+    fatal( "Missing QNAME" )   unless defined( $param->{qname} );
+    fatal( "Missing QTYPE" )   unless defined( $param->{qtype} );
 
     # Validate input
-    fatal("Failed to parse address")
-      unless is_ip($param->{address});
+    fatal( "Failed to parse address" )
+      unless is_ip( $param->{address} );
 
-    fatal("Failed to parse port")
-      unless ($param->{port} =~ /^\d+$/ and is_port($param->{port}));
+    fatal( "Failed to parse port" )
+      unless ( $param->{port} =~ /^\d+$/ and is_port( $param->{port} ) );
 
-    fatal("Failed to parse transport")
-      unless (lc($param->{transport}) eq "tcp"
-        or lc($param->{transport}) eq "udp");
+    fatal( "Failed to parse transport" )
+      unless ( lc( $param->{transport} ) eq "tcp"
+        or lc( $param->{transport} ) eq "udp" );
 
-    fatal("Invalid TCP timeout")
-      unless ($param->{tcp_timeout} =~ /^\d+$/
+    fatal( "Invalid TCP timeout" )
+      unless ( $param->{tcp_timeout} =~ /^\d+$/
         and $param->{tcp_timeout} > 0
-        and $param->{tcp_timeout} <= 60);
+        and $param->{tcp_timeout} <= 60 );
 
-    if ($param->{udp_timeout}) {
-        fatal("Invalid UDP timeout")
-          unless ($param->{udp_timeout} =~ /^\d+$/
+    if ( $param->{udp_timeout} ) {
+        fatal( "Invalid UDP timeout" )
+          unless ( $param->{udp_timeout} =~ /^\d+$/
             and $param->{udp_timeout} > 0
-            and $param->{udp_timeout} <= 60);
+            and $param->{udp_timeout} <= 60 );
     }
 
-    fatal("Invalid retransmission interval")
-      unless ($param->{retrans} =~ /^\d+$/
+    fatal( "Invalid retransmission interval" )
+      unless ( $param->{retrans} =~ /^\d+$/
         and $param->{retrans} > 0
-        and $param->{retrans} <= 60);
+        and $param->{retrans} <= 60 );
 
-    fatal("Invalid number of retries")
-      unless ($param->{retry} =~ /^\d+$/
+    fatal( "Invalid number of retries" )
+      unless ( $param->{retry} =~ /^\d+$/
         and $param->{retry} >= 0
-        and $param->{retry} <= 10);
+        and $param->{retry} <= 10 );
 
-    fatal("Invalid UDP buffer size")
-      unless ($param->{bufsize} =~ /^\d+$/
+    fatal( "Invalid UDP buffer size" )
+      unless ( $param->{bufsize} =~ /^\d+$/
         and $param->{bufsize} > 0
-        and $param->{bufsize} <= 65536);
+        and $param->{bufsize} <= 65536 );
 
     # Validate flags
-    fatal("Failed to parse CD flag") unless is_boolean($param->{flags}->{cd});
-    fatal("Failed to parse RD flag") unless is_boolean($param->{flags}->{rd});
-    fatal("Failed to parse AD flag") unless is_boolean($param->{flags}->{ad});
-    fatal("Failed to parse DO flag") unless is_boolean($param->{flags}->{do});
+    fatal( "Failed to parse CD flag" ) unless is_boolean( $param->{flags}->{cd} );
+    fatal( "Failed to parse RD flag" ) unless is_boolean( $param->{flags}->{rd} );
+    fatal( "Failed to parse AD flag" ) unless is_boolean( $param->{flags}->{ad} );
+    fatal( "Failed to parse DO flag" ) unless is_boolean( $param->{flags}->{do} );
 
     # Set up resolver
     ## no critic (Modules::RequireExplicitInclusion)
     my $res = Net::DNS::Resolver->new;
-    $res->nameserver($param->{address});
-    $res->port($param->{port});
-    $res->usevc(lc($param->{transport}) eq "tcp" ? 1 : 0);
-    $res->dnssec($param->{flags}->{do});
-    $res->recurse($param->{flags}->{rd});
-    $res->adflag($param->{flags}->{ad});
-    $res->cdflag($param->{flags}->{cd});
-    $res->retrans($param->{retrans});    # retransmission interval
-    $res->retry($param->{retry});        # query retries
-    $res->dnsrch(0);                     # do not use DNS search path
-    $res->defnames(0);                   # no default names
-    $res->igntc(1);                      # ignore TC
+    $res->nameserver( $param->{address} );
+    $res->port( $param->{port} );
+    $res->usevc( lc( $param->{transport} ) eq "tcp" ? 1 : 0 );
+    $res->dnssec( $param->{flags}->{do} );
+    $res->recurse( $param->{flags}->{rd} );
+    $res->adflag( $param->{flags}->{ad} );
+    $res->cdflag( $param->{flags}->{cd} );
+    $res->retrans( $param->{retrans} );    # retransmission interval
+    $res->retry( $param->{retry} );        # query retries
+    $res->dnsrch( 0 );                     # do not use DNS search path
+    $res->defnames( 0 );                   # no default names
+    $res->igntc( 1 );                      # ignore TC
 
     # set EDNS0 buffer size only if DO=1 and TCP is not used
-    if ($res->dnssec and not $res->usevc) {
-        $res->udppacketsize($param->{bufsize});
+    if ( $res->dnssec and not $res->usevc ) {
+        $res->udppacketsize( $param->{bufsize} );
     }
 
     return $res;
@@ -200,20 +199,21 @@ sub setup_resolver {
 
 sub is_ip {
     my $ip = shift;
-    return (ip_is_ipv4($ip) or ip_is_ipv6($ip));
+    return ( ip_is_ipv4( $ip ) or ip_is_ipv6( $ip ) );
 }
 
 sub is_port {
     my $port = shift;
-    return ($port > 0 or $port < 65536);
+    return ( $port > 0 or $port < 65536 );
 }
 
 sub is_boolean {
     my $x = shift;
 
-    if ($x == 0 or $x == 1) {
+    if ( $x == 0 or $x == 1 ) {
         return 1;
-    } else {
+    }
+    else {
         return;
     }
 }
